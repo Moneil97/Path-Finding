@@ -1,6 +1,3 @@
-//© A+ Computer Science  -  www.apluscompsci.com
-//Name - Cameron O'Neil
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +26,7 @@ class Maze
 {
    private int[][] maze;
    private ArrayList<Slot> marked = new ArrayList<Slot>();
-   private ArrayList<ArrayList<Slot>> paths = new ArrayList<ArrayList<Slot>>();
+   private PathManager pathManager = new PathManager();
 
 	public Maze(int size)
 	{
@@ -51,10 +48,14 @@ class Maze
 		return false;
 	}
 	
-	public ArrayList<ArrayList<Slot>> getAllPaths(){
-		paths.clear();
+//	public ArrayList<Slot> getShortestPath(){
+//		
+//	}
+	
+	public PathManager getAllPaths(){
+		pathManager.clear();
 		getAllPaths(0,0, new ArrayList<Slot>());
-		return paths;
+		return pathManager;
 	}
 	
 	private void getAllPaths(int r, int c, ArrayList<Slot> used){
@@ -64,7 +65,7 @@ class Maze
 					
 					used.add(new Slot(r,c));
 					if (c == maze.length-1){
-						paths.add(used);
+						pathManager.add(new Path(used));
 						return;
 					}
 					
@@ -94,6 +95,62 @@ class Maze
 		
 		return out;
 	}
+}
+
+class PathManager{
+	
+	ArrayList<Path> paths;
+	
+	public PathManager() {
+		paths = new ArrayList<Path>();
+	}
+	
+	public void add(Path path){
+		paths.add(path);
+	}
+	
+	public void clear() {
+		paths.clear();
+	}
+	
+	@Override
+	public String toString() {
+		
+		String out = "Paths: \n";
+		
+		for (Path path : paths)
+			out += "[" + path.toString()+"]\n";
+		
+		return out;
+	}
+	
+}
+
+class Path{
+	
+	public ArrayList<Slot> path;
+	
+	public Path(ArrayList<Slot> used) {
+		path = new ArrayList<Slot>(used);
+	}
+
+	public void add(Slot slot){
+		path.add(slot);
+	}
+	
+	@Override
+	public String toString() {
+		
+		String out = "Path: {";
+		
+		for (Slot s : path)
+			out+= s.toString() + ", ";
+		
+		out = out.substring(0, out.length()-2) + "} size: " + path.size();
+		
+		return out;
+	}
+	
 }
 
 class Slot{
