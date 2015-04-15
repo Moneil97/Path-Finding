@@ -3,33 +3,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import javax.swing.JOptionPane;
+
 public class PathFinder
 {
 	public static void main( String args[] ) throws IOException
 	{
-//		for (int i = 0; i < 20; i++){
-		int i =4;
+		int size = Integer.parseInt(JOptionPane.showInputDialog("Enter size of Matrix\nWarning: Larger numbers can cause stack overflows\nAnd small numbers are boring", "6"));
 		boolean hasExit = false;
+		Maze m;
 		do {
-			Maze m = new Maze(i);
+			m = new Maze(size);
 			System.out.println(m);
 			hasExit = m.hasExitPath(0,0);
-			System.out.println((hasExit ? "Exit Found":"There is no escape"));
-			System.out.println(m.getAllPaths() + "\nSorted:");
-			m.pathManager.sort();
-			System.out.println(m.pathManager + "\n\n");
+			System.out.println((hasExit ? "Exit Found":"There is no escape") + "\n");
+			if (hasExit){
+				m.runCalculations();
+				System.out.println("Found " + m.pathManager.paths.size() + " paths\n");
+				System.out.println(m.pathManager);
+				System.out.println("Shortest Path:\n" + m.shortestPath + "\n" + m.shortestPath.fancyToString() + "\n\n");
+			}
 		}
-		while (hasExit == false);
-//		}
-		
+		while (hasExit == false || (size > 2 && m.pathManager.paths.size() < 2));
 	}
 }
 
 class Maze
 {
-   private int[][] maze;
-   private ArrayList<Slot> marked = new ArrayList<Slot>();
-   PathManager pathManager = new PathManager();
+	private int[][] maze;
+	private ArrayList<Slot> marked = new ArrayList<Slot>();
+	protected PathManager pathManager = new PathManager();
+	protected Path shortestPath;
 
 	public Maze(int size)
 	{
@@ -59,11 +63,13 @@ class Maze
 		return marked.contains(new Slot(r,c));
 	}
 	
-//	public ArrayList<Slot> getShortestPath(){
-//		
-//	}
+	public void runCalculations(){
+		getAllPaths();
+		pathManager.sort();
+		shortestPath = pathManager.paths.get(0);
+	}
 	
-	public PathManager getAllPaths(){
+	private PathManager getAllPaths(){
 		pathManager.clear();
 		getAllPaths(0,0, new ArrayList<Slot>());
 		return pathManager;
@@ -126,8 +132,8 @@ class PathManager{
 		String out = "Paths: \n";
 		
 		for (Path path : paths)
-			out += "[" + path.toString()+"]\n";
-			//out += path.fancyToString()+"\n\n";
+			//out += "[" + path.toString()+"]\n";
+			out += path.fancyToString()+"\n\n";
 		
 		return out;
 	}
@@ -174,11 +180,17 @@ class Path implements Comparable<Path>{
 		}
 		
 		String out = "";
+
+		for (int[] row : matrix){
+			//out+= Arrays.toString(row) + "\n";
+			for (int col : row){
+				if (col == 0) out += "* ";
+				else out+=Integer.toUnsignedString(col, 32) + " ";
+			}
+			out+= "\n";
+		}
 		
-		for (int[] row : matrix)
-			out+= Arrays.toString(row) + "\n";
-		
-		return out = out.substring(0, out.length()-1);
+		return out = out.substring(0, out.length());
 	}
 	
 	@Override
