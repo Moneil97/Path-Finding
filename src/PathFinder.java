@@ -1,25 +1,26 @@
 //© A+ Computer Science  -  www.apluscompsci.com
 //Name - Cameron O'Neil
 
-import java.awt.Point;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class PathFinder
 {
 	public static void main( String args[] ) throws IOException
 	{
 //		for (int i = 0; i < 20; i++){
-//		int i =4;
+		int i =4;
+		boolean hasExit = false;
+		do {
 			Maze m = new Maze(i);
 			System.out.println(m);
-			System.out.println((m.hasExitPath(0,0) ? "Exit Found":"There is no escape") + "\n\n");
-			
-			System.out.println(m.getShortest());
+			hasExit = m.hasExitPath(0,0);
+			System.out.println((hasExit ? "Exit Found":"There is no escape"));
+			System.out.println(m.getAllPaths() + "\n\n");
+		}
+		while (hasExit == false);
 //		}
-		
 		
 	}
 }
@@ -27,7 +28,8 @@ public class PathFinder
 class Maze
 {
    private int[][] maze;
-   private ArrayList<Point> marked = new ArrayList<Point>();
+   private ArrayList<Slot> marked = new ArrayList<Slot>();
+   private ArrayList<ArrayList<Slot>> paths = new ArrayList<ArrayList<Slot>>();
 
 	public Maze(int size)
 	{
@@ -40,66 +42,47 @@ class Maze
 
 	public boolean hasExitPath(int r, int c)
 	{
-		
 		if (r>=0 && c>=0 && r<maze.length && c < maze.length && maze[r][c] == 1 && !isMarked(r,c)){
 			if (c == maze.length-1)
 				return true;
 			mark(r,c);
 			return hasExitPath(r+1,c) || hasExitPath(r-1,c) || hasExitPath(r,c+1) || hasExitPath(r,c-1);
 		}
-		
-//		System.out.println("[" + r + "] [" + c + "] = " + false);
 		return false;
 	}
 	
-	
-	private ArrayList<ArrayList<Point>> pathes = new ArrayList<ArrayList<Point>>();
-	
-	public ArrayList<ArrayList<Point>> getShortest(){
-		pathes.clear();
-		getShortest(0,0, new ArrayList<Point>());
-		return pathes;
+	public ArrayList<ArrayList<Slot>> getAllPaths(){
+		paths.clear();
+		getAllPaths(0,0, new ArrayList<Slot>());
+		return paths;
 	}
 	
-	private void getShortest(int r, int c, ArrayList<Point> used){
+	private void getAllPaths(int r, int c, ArrayList<Slot> used){
 		if (r>=0 && c>=0 && r<maze.length && c < maze.length){
-			if (!used.contains(new Point(r,c))){
+			if (!used.contains(new Slot(r,c))){
 				if (maze[r][c] == 1){
 					
-					used.add(new Point(r,c));
+					used.add(new Slot(r,c));
 					if (c == maze.length-1){
-						//We done
-						pathes.add(used);
+						paths.add(used);
 						return;
 					}
 					
-					getShortest(r,c+1, new ArrayList<Point>(used));
-					getShortest(r,c-1, new ArrayList<Point>(used));
-					getShortest(r+1,c, new ArrayList<Point>(used));
-					getShortest(r-1,c, new ArrayList<Point>(used));
+					getAllPaths(r,c+1, new ArrayList<Slot>(used));
+					getAllPaths(r,c-1, new ArrayList<Slot>(used));
+					getAllPaths(r+1,c, new ArrayList<Slot>(used));
+					getAllPaths(r-1,c, new ArrayList<Slot>(used));
 				}
 			}
 		}
 	}
 	
-//	public int getShortest(int r, int c){
-//		if (r>=0 && c>=0 && r<maze.length && c < maze.length){
-//			if (maze[r][c] == 1){
-//				int right = getShortest(r,c+1);
-//				int left = getShortest(r,c-1);
-//				int up = getShortest(r+1,c);
-//				int down = getShortest(r-1,c);
-//			}
-//		}
-//		return 0;
-//	}
-	
 	public void mark(int r, int c){
-		marked.add(new Point(r,c));
+		marked.add(new Slot(r,c));
 	}
 	
 	public boolean isMarked(int r, int c){
-		return marked.contains(new Point(r,c));
+		return marked.contains(new Slot(r,c));
 	}
 
 	public String toString()
@@ -129,4 +112,8 @@ class Slot{
 		return row == other.row && col == other.col; 
 	}
 	
+	@Override
+	public String toString() {
+		return "[" + row + "][" + col + "]";
+	}
 }
