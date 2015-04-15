@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class PathFinder
 {
@@ -14,7 +15,9 @@ public class PathFinder
 			System.out.println(m);
 			hasExit = m.hasExitPath(0,0);
 			System.out.println((hasExit ? "Exit Found":"There is no escape"));
-			System.out.println(m.getAllPaths() + "\n\n");
+			System.out.println(m.getAllPaths() + "\nSorted:");
+			m.pathManager.sort();
+			System.out.println(m.pathManager + "\n\n");
 		}
 		while (hasExit == false);
 //		}
@@ -26,7 +29,7 @@ class Maze
 {
    private int[][] maze;
    private ArrayList<Slot> marked = new ArrayList<Slot>();
-   private PathManager pathManager = new PathManager();
+   PathManager pathManager = new PathManager();
 
 	public Maze(int size)
 	{
@@ -46,6 +49,14 @@ class Maze
 			return hasExitPath(r+1,c) || hasExitPath(r-1,c) || hasExitPath(r,c+1) || hasExitPath(r,c-1);
 		}
 		return false;
+	}
+	
+	public void mark(int r, int c){
+		marked.add(new Slot(r,c));
+	}
+	
+	public boolean isMarked(int r, int c){
+		return marked.contains(new Slot(r,c));
 	}
 	
 //	public ArrayList<Slot> getShortestPath(){
@@ -78,14 +89,6 @@ class Maze
 		}
 	}
 	
-	public void mark(int r, int c){
-		marked.add(new Slot(r,c));
-	}
-	
-	public boolean isMarked(int r, int c){
-		return marked.contains(new Slot(r,c));
-	}
-
 	public String toString()
 	{
 		String out = "";
@@ -113,6 +116,10 @@ class PathManager{
 		paths.clear();
 	}
 	
+	public void sort(){
+		Collections.sort(paths);
+	}
+	
 	@Override
 	public String toString() {
 		
@@ -120,13 +127,14 @@ class PathManager{
 		
 		for (Path path : paths)
 			out += "[" + path.toString()+"]\n";
+			//out += path.fancyToString()+"\n\n";
 		
 		return out;
 	}
 	
 }
 
-class Path{
+class Path implements Comparable<Path>{
 	
 	public ArrayList<Slot> path;
 	
@@ -136,6 +144,41 @@ class Path{
 
 	public void add(Slot slot){
 		path.add(slot);
+	}
+	
+	public int getSize(){
+		return path.size();
+	}
+	
+	@Override
+	public int compareTo(Path other) {
+		return (this.getSize() == other.getSize()? 0: (this.getSize() < other.getSize() ? -1: 1));
+	}
+	
+	public String fancyToString(){
+		
+		int largestRow=1, largestCol=1;
+		
+		for (Slot slot : path){
+			largestRow = Math.max(largestRow, slot.row+1);
+			largestCol = Math.max(largestCol, slot.col+1);
+		}
+		
+		int matrix[][] = new int[largestRow][largestCol];
+		for (int i=0; i <matrix.length; i++)
+			Arrays.fill(matrix[i], 0);
+		
+		int x=0;
+		for (Slot slot : path){
+			matrix[slot.row][slot.col] = ++x;
+		}
+		
+		String out = "";
+		
+		for (int[] row : matrix)
+			out+= Arrays.toString(row) + "\n";
+		
+		return out = out.substring(0, out.length()-1);
 	}
 	
 	@Override
