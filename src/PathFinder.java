@@ -15,6 +15,8 @@ public class PathFinder
 		do {
 			m = new Maze(size);
 			System.out.println(m);
+			m.setEndCol(size-1);
+			m.setEndRow(3);
 			hasExit = m.hasExitPath(0,0);
 			System.out.println((hasExit ? "Exit Found":"There is no escape") + "\n");
 			if (hasExit){
@@ -34,6 +36,7 @@ class Maze
 	private ArrayList<Slot> marked = new ArrayList<Slot>();
 	protected PathManager pathManager = new PathManager();
 	protected Path shortestPath;
+	protected int startRow=-1, endRow=-1, startCol=-1, endCol=-1;
 
 	public Maze(int size)
 	{
@@ -43,11 +46,39 @@ class Maze
 			for (int c =0; c < size; c++)
 				maze[r][c] = Math.random() > .5 ? 1:0;
 	}
+	
+	public void setStartRow(int row){
+		startRow = row;
+	}
+	
+	public void setEndRow(int row){
+		endRow = row;
+	}
+	
+	public void setStartCol(int col){
+		startCol = col;
+	}
+	
+	public void setEndCol(int col){
+		endCol = col;
+	}
+	
+//	public void setStart(Slot slot){
+//		
+//	}
+//	
+//	public void setEnd(Slot slot){
+//		
+//	}
 
 	public boolean hasExitPath(int r, int c)
 	{
 		if (r>=0 && c>=0 && r<maze.length && c < maze.length && maze[r][c] == 1 && !isMarked(r,c)){
-			if (c == maze.length-1)
+			if (endCol >= 0 && c == endCol && endRow < 0)
+				return true;
+			else if (endRow >= 0 && r == endRow && endCol < 0)
+				return true;
+			else if (endRow >= 0 && r == endRow && endCol >= 0 && c == endCol)
 				return true;
 			mark(r,c);
 			return hasExitPath(r+1,c) || hasExitPath(r-1,c) || hasExitPath(r,c+1) || hasExitPath(r,c-1);
