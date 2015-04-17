@@ -15,24 +15,28 @@ public class PathFinder
 		do {
 			m = new Maze(size);
 			System.out.println(m);
-			m.setEndCol(size-1);
-			m.setEndRow(3);
-			hasExit = m.hasExitPath(0,0);
+			m.setStart(0, 0);
+			m.setEnd(size-1, size-1);
+			hasExit = m.hasPath();
 			System.out.println((hasExit ? "Exit Found":"There is no escape") + "\n");
 			if (hasExit){
-				m.runCalculations();
-				System.out.println("Found " + m.pathManager.paths.size() + " paths\n");
-				System.out.println(m.pathManager);
+				//m.updateAllPaths();
+				//System.out.println("Found " + m.pathManager.paths.size() + " paths\n");
+				//System.out.println(m.pathManager);
+				m.updateShortestPath();
+				//System.out.println(m.shortestPath);
 				System.out.println("Shortest Path:\n" + m.shortestPath + "\n" + m.shortestPath.fancyToString() + "\n\n");
 			}
 		}
-		while (hasExit == false || (size > 2 && m.pathManager.paths.size() < 2));
+		while (hasExit == false/* || (size > 2 && m.pathManager.paths.size() < 2)*/);
 	}
 }
 
 class Maze
 {
-	private int[][] maze;
+	/**Holds matrix*/
+	private int[][] matrix;
+	/**Used by hasPath() to keep track of previously checked points*/
 	private ArrayList<Slot> marked = new ArrayList<Slot>();
 	protected PathManager pathManager = new PathManager();
 	protected Path shortestPath;
@@ -40,97 +44,173 @@ class Maze
 
 	public Maze(int size)
 	{
-		maze = new int[size][size];
+		matrix = new int[size][size];
 		
 		for (int r =0; r < size; r++)
 			for (int c =0; c < size; c++)
-				maze[r][c] = Math.random() > .5 ? 1:0;
+				matrix[r][c] = Math.random() > .3 ? 1:0;
+	}
+	
+	/**
+	 * Sets starting point
+	 * <br>Set to a negative number to ignore
+	 * <br>Ex: (2,-1) will have a starting point of the entire row 2
+	 * @param row row to check
+	 * @param col column to check
+	 */
+	
+	public void setStart(int row, int col){
+		startRow = row;
+		startCol = col;
 	}
 	
 	public void setStartRow(int row){
 		startRow = row;
 	}
 	
-	public void setEndRow(int row){
-		endRow = row;
-	}
-	
 	public void setStartCol(int col){
 		startCol = col;
+	}
+	
+	/**
+	 * Sets ending point
+	 * <br>Set to a negative number to ignore
+	 * <br>Ex: (2,-1) will have a starting point of the entire row 2
+	 * @param row row to check
+	 * @param col column to check
+	 */
+	
+	public void setEnd(int row, int col){
+		endRow = row;
+		endCol = col;
+	}
+	
+	public void setEndRow(int row){
+		endRow = row;
 	}
 	
 	public void setEndCol(int col){
 		endCol = col;
 	}
 	
-//	public void setStart(Slot slot){
-//		
-//	}
-//	
-//	public void setEnd(Slot slot){
-//		
-//	}
+	/**
+	 * Quick check if there is an available path
+	 * @return true if has path
+	 */
+	
+	public boolean hasPath(){
+		marked.clear();
+		return hasPath(startRow, startCol);
+	}
 
-	public boolean hasExitPath(int r, int c)
+	/**
+	 * recursive function used by hasPath()
+	 * @param r row
+	 * @param c	col
+	 * @return true if has available path
+	 */
+	
+	private boolean hasPath(int r, int c)
 	{
-		if (r>=0 && c>=0 && r<maze.length && c < maze.length && maze[r][c] == 1 && !isMarked(r,c)){
-			if (endCol >= 0 && c == endCol && endRow < 0)
-				return true;
-			else if (endRow >= 0 && r == endRow && endCol < 0)
-				return true;
-			else if (endRow >= 0 && r == endRow && endCol >= 0 && c == endCol)
+		if (r>=0 && c>=0 && r<matrix.length && c < matrix.length && matrix[r][c] == 1 && !isMarked(r,c)){
+			if ((endCol >= 0 && c == endCol && endRow < 0) || (endRow >= 0 && r == endRow && endCol < 0) || (endRow >= 0 && r == endRow && endCol >= 0 && c == endCol))
 				return true;
 			mark(r,c);
-			return hasExitPath(r+1,c) || hasExitPath(r-1,c) || hasExitPath(r,c+1) || hasExitPath(r,c-1);
+			return hasPath(r+1,c) || hasPath(r-1,c) || hasPath(r,c+1) || hasPath(r,c-1);
 		}
 		return false;
 	}
 	
-	public void mark(int r, int c){
+	private void mark(int r, int c){
 		marked.add(new Slot(r,c));
 	}
 	
-	public boolean isMarked(int r, int c){
+	private boolean isMarked(int r, int c){
 		return marked.contains(new Slot(r,c));
 	}
 	
-	public void runCalculations(){
-		getAllPaths();
-		pathManager.sort();
-		shortestPath = pathManager.paths.get(0);
-	}
-	
-	private PathManager getAllPaths(){
+	public void updateAllPaths(){
 		pathManager.clear();
-		getAllPaths(0,0, new ArrayList<Slot>());
-		return pathManager;
+		updateAllPaths(startRow,startCol, new ArrayList<Slot>());
 	}
 	
-	private void getAllPaths(int r, int c, ArrayList<Slot> used){
-		if (r>=0 && c>=0 && r<maze.length && c < maze.length){
+	private void updateAllPaths(int r, int c, ArrayList<Slot> used){
+		
+		if (r>=0 && c>=0 && r<matrix.length && c < matrix.length){
 			if (!used.contains(new Slot(r,c))){
-				if (maze[r][c] == 1){
+				if (matrix[r][c] == 1){
 					
 					used.add(new Slot(r,c));
-					if (c == maze.length-1){
+					if ((endCol >= 0 && c == endCol && endRow < 0) || (endRow >= 0 && r == endRow && endCol < 0) || (endRow >= 0 && r == endRow && endCol >= 0 && c == endCol)){
 						pathManager.add(new Path(used));
 						return;
 					}
 					
-					getAllPaths(r,c+1, new ArrayList<Slot>(used));
-					getAllPaths(r,c-1, new ArrayList<Slot>(used));
-					getAllPaths(r+1,c, new ArrayList<Slot>(used));
-					getAllPaths(r-1,c, new ArrayList<Slot>(used));
+					updateAllPaths(r,c+1, new ArrayList<Slot>(used));
+					updateAllPaths(r,c-1, new ArrayList<Slot>(used));
+					updateAllPaths(r+1,c, new ArrayList<Slot>(used));
+					updateAllPaths(r-1,c, new ArrayList<Slot>(used));
 				}
 			}
 		}
+	}
+	
+	public void sortAllPaths(){
+		pathManager.sort();
+	}
+	
+	public void updateShortestPath(){
+		updateShortestPath(startRow,startCol, new ArrayList<Slot>());
+	}
+	
+	private void updateShortestPath(int r, int c, ArrayList<Slot> used){
+		
+		if (r>=0 && c>=0 && r<matrix.length && c < matrix.length){
+			if (!used.contains(new Slot(r,c))){
+				if (matrix[r][c] == 1){
+					used.add(new Slot(r,c));
+					if ((endCol >= 0 && c == endCol && endRow < 0) || (endRow >= 0 && r == endRow && endCol < 0) || (endRow >= 0 && r == endRow && endCol >= 0 && c == endCol)){
+						shortestPath = new Path(used);
+						say("Found new shortest path: " + shortestPath);
+						used.clear();
+						used = null;
+						//Runtime.getRuntime().gc();
+						return;
+					}
+					
+					if (shortestPath != null && used.size() >= shortestPath.getSize()-1){
+						used.clear();
+						used = null;
+						//Runtime.getRuntime().gc();
+						return;
+					}
+					else{
+						updateShortestPath(r,c+1, new ArrayList<Slot>(used));
+						updateShortestPath(r+1,c, new ArrayList<Slot>(used));
+						updateShortestPath(r,c-1, new ArrayList<Slot>(used));
+						updateShortestPath(r-1,c, new ArrayList<Slot>(used));
+						used.clear();
+						used = null;
+						//Runtime.getRuntime().gc();
+						return;
+					}
+				}
+			}
+		}
+		used.clear();
+		used = null;
+		//Runtime.getRuntime().gc();
+	}
+	
+	public static void say(Object s){
+		System.out.println(s);
 	}
 	
 	public String toString()
 	{
 		String out = "";
 		
-		for (int [] m : maze)
+		for (int [] m : matrix)
 			out += Arrays.toString(m) + "\n";
 		
 		return out;
@@ -216,7 +296,7 @@ class Path implements Comparable<Path>{
 			//out+= Arrays.toString(row) + "\n";
 			for (int col : row){
 				if (col == 0) out += "* ";
-				else out+=Integer.toUnsignedString(col, 32) + " ";
+				else out+=(char)(col+48) + " ";//Integer.toUnsignedString(col, 32) + " ";
 			}
 			out+= "\n";
 		}
